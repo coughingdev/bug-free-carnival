@@ -2,52 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#120b2b">
 <title>Dino Rail Blaster: RAGE MODE</title>
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#09051a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden;touch-action:none}
-  body{display:grid;place-items:center}
+  html,body{margin:0;width:100%;height:100%;background:#09051a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  :root{--app-w:100vw;--app-h:100dvh}
+  body{position:fixed;inset:0;width:100%;height:100%;min-height:100%;background:#09051a}
   #wrap{
-    position:relative;
-    width:min(100vw,1080px);
-    aspect-ratio:1080 / 500;
+    position:fixed;
+    left:0;top:0;
+    width:var(--app-w);
+    height:var(--app-h);
     background:#120b2b;
     overflow:hidden;
+    contain:layout paint size;
+    transform:translateZ(0);
   }
   canvas{width:100%;height:100%;display:block;image-rendering:pixelated;background:linear-gradient(#ff4d8d 0%,#ff8a5c 38%,#3d246c 39%,#160d34 100%)}
-  #hud{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px;font-size:18px}
-  #rage{position:absolute;top:42px;left:12px;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;font-size:16px}
-  #controls{position:absolute;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end}
+  #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px;font-size:18px}
+  #rage{position:absolute;top:max(40px,calc(env(safe-area-inset-top) + 38px));left:max(14px,env(safe-area-inset-left));font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;font-size:16px}
+  #controls{position:absolute;left:max(14px,calc(env(safe-area-inset-left) + 6px));right:max(14px,calc(env(safe-area-inset-right) + 6px));bottom:max(10px,calc(env(safe-area-inset-bottom) + 4px));display:flex;justify-content:space-between;align-items:end;z-index:5}
   .move{display:flex;gap:6px;align-items:end}
   button{border:0;color:white;font-weight:1000;letter-spacing:.04em;box-shadow:0 6px 0 rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
-  .ctl{width:86px;height:78px;border-radius:0;font-size:0;box-shadow:none;position:relative;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+  .ctl{width:94px;height:84px;border-radius:0;font-size:0;box-shadow:none;position:relative;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
   #up{background:#1678ff;clip-path:polygon(50% 0,100% 100%,0 100%)}
   #down{background:#ffd21a;clip-path:polygon(0 0,100% 0,50% 100%)}
   #start{min-width:150px;height:62px;border-radius:18px;background:#d91f2f;font-size:18px;clip-path:polygon(0 8%,90% 0,100% 25%,92% 45%,100% 70%,88% 100%,0 92%,8% 70%,0 46%,9% 26%)}
   button:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
-  #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:24px}
+  #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:24px;z-index:4}
   #message>div{background:rgba(8,4,24,.82);padding:20px 24px;border:3px solid #fff;border-radius:16px;max-width:500px;text-shadow:2px 2px #000}
   #message h1{margin:0 0 8px;font-size:clamp(28px,6vw,52px)}
   #message p{margin:5px 0}
-  @media (max-width:700px){
+  @media (max-width:700px), (max-height:520px){
     #hud{font-size:15px}
     #rage{font-size:13px;top:36px}
-    #controls{left:6px;right:6px;bottom:max(4px,env(safe-area-inset-bottom))}
+    #controls{left:max(10px,calc(env(safe-area-inset-left) + 4px));right:max(10px,calc(env(safe-area-inset-right) + 4px));bottom:max(6px,calc(env(safe-area-inset-bottom) + 2px))}
     .move{gap:4px}
-    .ctl{width:92px;height:84px}
+    .ctl{width:96px;height:86px}
     #start{min-width:118px;height:58px;font-size:16px}
     #message>div{max-width:420px;padding:16px 18px}
   }
+
+  #rotate{display:none;position:absolute;inset:0;z-index:20;background:#09051a;place-items:center;text-align:center;padding:28px;font-weight:1000;text-shadow:2px 2px #000}
+  #rotate strong{display:block;font-size:clamp(28px,9vw,52px);margin-bottom:8px}
+  @media (orientation:portrait){#rotate{display:grid}#controls{visibility:hidden}}
 </style>
 </head>
 <body>
 <div id="wrap">
+  <div id="rotate"><div><strong>↻ ROTATE PHONE</strong><span>Dino Rail Blaster is built for landscape play.</span></div></div>
   <canvas id="game" width="1080" height="500"></canvas>
   <div id="hud"><span id="score">SCORE 0000</span><span id="lives">LIVES ♥♥</span></div>
   <div id="rage">RAGE x1.0</div>
-  <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>Now tuned for a 1080×500 ultra-wide playfield.</p><p>Move with ▲ / ▼ or the blue & yellow triangle buttons.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
+  <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>iPhone 15–17 adaptive widescreen build.</p><p>Move with ▲ / ▼ or the blue & yellow triangle buttons.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
   <div id="controls">
     <div class="move">
       <button class="ctl" id="up" aria-label="Move up">▲</button>
@@ -66,14 +75,51 @@
   const msg = document.getElementById('message');
   const startBtn = document.getElementById('start');
 
-  const W=1080,H=500;
+  let W=1080; const H=500;
   const HORIZON=340;
   const GRID_TOP=350;
   let running=false, score=0, lives=2, last=0, enemyClock=0, shotClock=0, speed=330;
   let elapsed=0, shake=0, combo=0, bossClock=0;
   let stars=[], bullets=[], enemies=[], enemyBullets=[], particles=[];
   const input={up:false,down:false};
-  const player={x:145,y:H/2,w:92,h:52,vy:0,inv:0};
+  const player={x:150,y:H/2,w:92,h:52,vy:0,inv:0};
+
+  const root=document.documentElement;
+  let viewportRAF=0;
+  function viewportSize(){
+    const vv=window.visualViewport;
+    return {
+      width: Math.max(1, vv ? vv.width : window.innerWidth),
+      height: Math.max(1, vv ? vv.height : window.innerHeight)
+    };
+  }
+  function fitToIPhoneViewport(){
+    const v=viewportSize();
+    root.style.setProperty('--app-w',v.width+'px');
+    root.style.setProperty('--app-h',v.height+'px');
+
+    // Keep a 500-unit-tall game world and vary only its width to match
+    // the exact current landscape viewport. This avoids stretching on
+    // iPhone 15/16/17 and also adapts to Plus/Pro/Pro Max models.
+    const landscapeAspect=Math.max(v.width,v.height)/Math.min(v.width,v.height);
+    const nextW=Math.round(H*landscapeAspect);
+    if(v.width>=v.height && Math.abs(nextW-W)>0){
+      W=nextW;
+      canvas.width=W;
+      canvas.height=H;
+      resetStars();
+    } else if(v.width<v.height){
+      // Portrait is covered by the rotate overlay; retain a sane world.
+      W=1080;
+      canvas.width=W;
+      canvas.height=H;
+    }
+    window.scrollTo(0,0);
+  }
+  function scheduleViewportFit(){
+    cancelAnimationFrame(viewportRAF);
+    viewportRAF=requestAnimationFrame(fitToIPhoneViewport);
+  }
 
   function resetStars(){
     stars=[];
@@ -97,9 +143,10 @@
     reset(); running=true; msg.style.display='none'; startBtn.textContent='↻ RESTART';
   }
   function end(){
-    running=false;
+    running=false; input.up=false; input.down=false; player.vy=0;
     msg.innerHTML=`<div><h1>GAME OVER</h1><p>Score: ${score}</p><p>Peak Rage: x${rageLevel().toFixed(1)}</p><p>Press RESTART to suffer again.</p></div>`;
     msg.style.display='grid';
+    requestAnimationFrame(()=>{ window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0; });
   }
 
   function spawnEnemy(forcedType){
@@ -227,9 +274,9 @@
     ctx.clearRect(-20,-20,W+40,H+40);
 
     // Miami sun
-    ctx.fillStyle='#ffdb5a';ctx.beginPath();ctx.arc(825,120,78,0,Math.PI*2);ctx.fill();
+    const sunX=W*.765;ctx.fillStyle='#ffdb5a';ctx.beginPath();ctx.arc(sunX,120,78,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='rgba(190,39,100,.85)';
-    for(let y=92;y<170;y+=12)ctx.fillRect(745,y,160,6);
+    for(let y=92;y<170;y+=12)ctx.fillRect(sunX-80,y,160,6);
 
     // skyline
     ctx.fillStyle='#241346';
@@ -238,7 +285,7 @@
     // road/grid
     ctx.strokeStyle='rgba(83,238,255,.22)';ctx.lineWidth=2;
     for(let y=GRID_TOP;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
-    for(let x=-320;x<1400;x+=90){ctx.beginPath();ctx.moveTo(W/2,HORIZON);ctx.lineTo(x,H);ctx.stroke()}
+    for(let x=-320;x<W+320;x+=90){ctx.beginPath();ctx.moveTo(W/2,HORIZON);ctx.lineTo(x,H);ctx.stroke()}
 
     ctx.fillStyle='white';for(const s of stars)ctx.fillRect(s.x,s.y,s.s,s.s);
 
@@ -300,6 +347,18 @@
   addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='w')input.up=true;if(e.key==='ArrowDown'||e.key==='s')input.down=true;if(e.key==='Enter'&&!running)start()});
   addEventListener('keyup',e=>{if(e.key==='ArrowUp'||e.key==='w')input.up=false;if(e.key==='ArrowDown'||e.key==='s')input.down=false});
   startBtn.addEventListener('click',start);
+  addEventListener('resize',scheduleViewportFit,{passive:true});
+  addEventListener('orientationchange',()=>{scheduleViewportFit();setTimeout(scheduleViewportFit,120);setTimeout(scheduleViewportFit,350)},{passive:true});
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize',scheduleViewportFit,{passive:true});
+    visualViewport.addEventListener('scroll',scheduleViewportFit,{passive:true});
+  }
+  document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+  fitToIPhoneViewport();
   requestAnimationFrame(loop);
 })();
 </script>

@@ -1,16 +1,17 @@
-# Dino Rail Blaster – RAGE MODE (1080x500)
+# Dino Rail Blaster – RAGE MODE (iPhone 15–17 Adaptive)
 
-This package is ready for GitHub Pages.
+GitHub Pages-ready build optimized for modern iPhones in landscape.
 
-## Files
-- `index.html` — the full playable game
-- `.nojekyll` — optional GitHub Pages helper file
+## What changed
+- Full-bleed landscape layout using the real Safari `visualViewport`
+- Dynamic game-world width so iPhone 15, 16, and 17 aspect ratios fit without stretching
+- Dynamic Island / notch safe-area protection for HUD and controls
+- iOS pinch/double-tap zoom suppression
+- Safer rotation and Safari address-bar resizing
+- Portrait rotate-phone screen
+- Large thumb-friendly up/down triangle controls
 
-## How to use on GitHub
-1. Unzip this folder.
-2. Upload the contents to the root of your GitHub repo.
-3. Make sure `index.html` is in the main repo folder.
-4. Commit the changes.
-5. In GitHub Pages, publish from the main branch root.
+The game still uses a 500-unit-tall logical playfield. Its width automatically adapts to the actual device screen.
 
-Your game should then load from your GitHub Pages link.
+## GitHub Pages
+Upload the files in this folder to the root of your repository, replacing the old `index.html`, then commit the changes.
