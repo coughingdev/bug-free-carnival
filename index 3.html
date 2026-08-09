@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Sunday Cartridge Football Mobile</title>
+<style>
+:root{--cream:#f7efc5;--yellow:#ffd84a;--blue:#2f76e2;--red:#d43e42;--green:#155a28;--green2:#0f471f;--black:#020202}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;background:#000;color:var(--cream);font-family:"Courier New",monospace;overflow:hidden;touch-action:none}
+body{display:flex;align-items:center;justify-content:center;padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left))}
+.shell{width:min(100vw,177.777vh);aspect-ratio:16/9;background:#181818;border:clamp(3px,.6vw,8px) solid #777;box-shadow:inset 0 0 0 3px #222;display:grid;grid-template-rows:8% 8% 60% 24%;overflow:hidden}
+.title{background:#070707;color:var(--yellow);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:clamp(12px,2.2vw,30px);letter-spacing:.08em;text-shadow:2px 2px #6b2b2b}
+.title small{font-size:.35em;color:#aaa;letter-spacing:.12em}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 1.5%;background:#000;border-top:2px solid #555;border-bottom:2px solid #555;font-size:clamp(10px,1.4vw,20px)}
+.score .mid{color:var(--yellow);font-weight:bold;text-align:center} .score .right{text-align:right}
+.screen{position:relative;overflow:hidden;background:linear-gradient(#62a9d8 0 20%,#3f7a31 20% 23%,var(--green) 23% 100%)}
+.crowd{position:absolute;inset:0 0 auto 0;height:20%;background:repeating-linear-gradient(90deg,#ddd 0 3px,#222 3px 6px,#d44 6px 9px,#44d 9px 12px);opacity:.65}
+.field{position:absolute;left:4%;right:4%;top:27%;bottom:6%;background:
+repeating-linear-gradient(90deg,transparent 0 9.65%,rgba(255,255,255,.17) 9.65% 10%),
+repeating-linear-gradient(0deg,transparent 0 24%,rgba(255,255,255,.10) 24% 25%),var(--green2);
+border:3px solid #f1ecc8}
+.endz{position:absolute;top:27%;bottom:6%;width:6%;background:rgba(255,216,74,.16);border-top:3px solid #f1ecc8;border-bottom:3px solid #f1ecc8} .endz.l{left:4%} .endz.r{right:4%}
+.los,.first{position:absolute;top:27%;bottom:6%;width:3px;z-index:2} .los{background:#6ac6ff} .first{background:#ffd84a}
+.p{position:absolute;width:clamp(12px,2vw,24px);height:clamp(12px,2vw,24px);border:2px solid white;z-index:5;transition:left .12s linear,top .12s linear} .off{background:var(--blue)} .def{background:var(--red)} .active{outline:3px solid var(--yellow);box-shadow:0 0 10px var(--yellow)}
+.ball{position:absolute;width:clamp(8px,1.3vw,15px);height:clamp(5px,.8vw,10px);background:#7a451f;border:1px solid #e7b27e;border-radius:50%;z-index:7;transition:left .12s linear,top .12s linear}
+.msg{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:#000;border:2px solid #eee;color:var(--yellow);font-size:clamp(9px,1.2vw,16px);padding:.45em .8em;z-index:12;text-align:center;min-width:25%}
+.hud{position:absolute;left:1%;bottom:1%;background:#000;border:2px solid #ddd;padding:.3em .5em;font-size:clamp(8px,1vw,14px);z-index:11}
+.bottom{display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr;gap:1%;padding:1%;background:#202020}
+.card{background:#060606;border:2px solid #666;padding:2%;overflow:hidden}
+select{width:100%;background:#000;color:#fff;border:2px solid #aaa;font:inherit;font-size:clamp(8px,.9vw,13px);padding:.35em;margin:.15em 0}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;gap:.4em;align-items:center} .teams b{color:var(--yellow);font-size:clamp(8px,.8vw,12px)}
+.start{width:100%;background:var(--yellow);border:2px solid #fff;color:#000;font-weight:900;padding:.45em;font:inherit;font-size:clamp(8px,1vw,14px);margin-top:.25em}
+.plays{display:grid;grid-template-columns:1fr 1fr;gap:4%;height:100%}
+.play{border:2px solid #eee;color:#fff;font:inherit;font-weight:900;font-size:clamp(8px,1vw,14px);box-shadow:inset -3px -3px #000} .sneak{background:#6b3b8c} .rbp{background:#137565} .short{background:#956315} .long{background:#9d2939}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4%;height:100%} .pad button{background:#3b3b3b;color:#fff;border:2px solid #aaa;font:inherit;font-weight:900;font-size:clamp(10px,1.4vw,20px);touch-action:none} .up{grid-column:2} .left{grid-column:1;grid-row:2} .right{grid-column:3;grid-row:2} .down{grid-column:2;grid-row:3} .boost{grid-column:2;grid-row:2;background:#8d6d10!important;color:var(--yellow)!important}
+.note{font-size:clamp(7px,.7vw,10px);color:#aaa;line-height:1.2;margin-top:.2em}
+.rotate{display:none;position:absolute;inset:0;background:#000d;color:#fff;z-index:100;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:18px}
+@media (orientation:portrait) and (max-width:700px){.rotate{display:flex;pointer-events:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="title">SUNDAY CARTRIDGE FOOTBALL<small>MOBILE 16:9 EDITION</small></div>
+  <div class="score"><div><span id="ha">DAL</span> <span id="hs">0</span></div><div class="mid"><span id="q">Q1</span> <span id="clk">5:00</span></div><div class="right"><span id="aa">PHI</span> <span id="as">0</span></div></div>
+
+  <div class="screen" id="screen">
+    <div class="crowd"></div><div class="field"></div><div class="endz l"></div><div class="endz r"></div>
+    <div class="los" id="los"></div><div class="first" id="first"></div>
+    <div class="p off" id="qb"></div><div class="p off" id="rb"></div><div class="p off" id="wr1"></div><div class="p off" id="wr2"></div>
+    <div class="p def" id="d1"></div><div class="p def" id="d2"></div><div class="p def" id="d3"></div><div class="p def" id="d4"></div><div class="p def" id="d5"></div>
+    <div class="ball" id="ball"></div><div class="msg" id="msg">PRESS START</div><div class="hud" id="hud">1ST & 10 • DAL 25</div>
+  </div>
+
+  <div class="bottom">
+    <div class="card">
+      <div class="teams"><select id="home"></select><b>VS</b><select id="away"></select></div>
+      <button class="start" onclick="startGame()">START GAME</button>
+      <div class="note">Landscape recommended. After the catch/run, use the D-pad to move the highlighted player.</div>
+    </div>
+    <div class="card">
+      <div class="plays">
+        <button class="play sneak" onclick="callPlay('QB SNEAK')">QB SNEAK</button>
+        <button class="play rbp" onclick="callPlay('OUTSIDE RB PASS')">OUTSIDE RB PASS</button>
+        <button class="play short" onclick="callPlay('SHORT BALL')">SHORT BALL</button>
+        <button class="play long" onclick="callPlay('LONG BALL')">LONG BALL</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="pad">
+        <button class="up" data-dir="up">▲</button>
+        <button class="left" data-dir="left">◀</button>
+        <button class="boost" id="boost">A</button>
+        <button class="right" data-dir="right">▶</button>
+        <button class="down" data-dir="down">▼</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rotate">ROTATE PHONE TO LANDSCAPE<br><br>16:9 MODE</div>
+
+<script>
+const teams=[{"a": "ARI", "n": "Arizona Cardinals"}, {"a": "ATL", "n": "Atlanta Falcons"}, {"a": "BAL", "n": "Baltimore Ravens"}, {"a": "BUF", "n": "Buffalo Bills"}, {"a": "CAR", "n": "Carolina Panthers"}, {"a": "CHI", "n": "Chicago Bears"}, {"a": "CIN", "n": "Cincinnati Bengals"}, {"a": "CLE", "n": "Cleveland Browns"}, {"a": "DAL", "n": "Dallas Cowboys"}, {"a": "DEN", "n": "Denver Broncos"}, {"a": "DET", "n": "Detroit Lions"}, {"a": "GB", "n": "Green Bay Packers"}, {"a": "HOU", "n": "Houston Texans"}, {"a": "IND", "n": "Indianapolis Colts"}, {"a": "JAX", "n": "Jacksonville Jaguars"}, {"a": "KC", "n": "Kansas City Chiefs"}, {"a": "LV", "n": "Las Vegas Raiders"}, {"a": "LAC", "n": "Los Angeles Chargers"}, {"a": "LAR", "n": "Los Angeles Rams"}, {"a": "MIA", "n": "Miami Dolphins"}, {"a": "MIN", "n": "Minnesota Vikings"}, {"a": "NE", "n": "New England Patriots"}, {"a": "NO", "n": "New Orleans Saints"}, {"a": "NYG", "n": "New York Giants"}, {"a": "NYJ", "n": "New York Jets"}, {"a": "PHI", "n": "Philadelphia Eagles"}, {"a": "PIT", "n": "Pittsburgh Steelers"}, {"a": "SF", "n": "San Francisco 49ers"}, {"a": "SEA", "n": "Seattle Seahawks"}, {"a": "TB", "n": "Tampa Bay Buccaneers"}, {"a": "TEN", "n": "Tennessee Titans"}, {"a": "WAS", "n": "Washington Commanders"}];
+for(const t of teams){for(const id of ["home","away"]){let o=document.createElement("option");o.value=t.a;o.textContent=t.a;document.getElementById(id).appendChild(o)}}
+home.value="DAL";away.value="PHI";
+
+const P=["qb","rb","wr1","wr2","d1","d2","d3","d4","d5"];
+let st={started:false,poss:"home",down:1,toGo:10,spot:25,home:0,away:0,q:1,time:300,busy:false,live:false,carrier:null,play:null,playSide:null,runTicks:0};
+let pos={};
+const defaults={
+qb:[25,60],rb:[21,70],wr1:[23,40],wr2:[23,80],d1:[31,60],d2:[35,43],d3:[36,77],d4:[48,38],d5:[49,82],ball:[28,64]
+};
+function el(id){return document.getElementById(id)}
+function setPos(id,x,y){pos[id]=[x,y];el(id).style.left=x+"%";el(id).style.top=y+"%"}
+function resetSprites(){
+  for(const [id,v] of Object.entries(defaults))setPos(id,v[0],v[1]);
+  for(const id of P)el(id).classList.remove("active");
+}
+function startGame(){
+ st={started:true,poss:"home",down:1,toGo:10,spot:25,home:0,away:0,q:1,time:300,busy:false,live:false,carrier:null,play:null,playSide:null,runTicks:0};
+ resetSprites();msg.textContent=home.value+" BALL";update();
+}
+function callPlay(type){
+ if(!st.started||st.busy||st.live||st.poss!=="home")return;
+ st.busy=true;st.play=type;st.playSide="home";msg.textContent=type;
+ setTimeout(()=>snapPlay(type,"home"),150);
+}
+function snapPlay(type,side){
+ resetSprites();
+ if(type==="QB SNEAK"){st.carrier="qb";setPos("qb",31,60);setPos("ball",31,64);beginLive(type,side,1)}
+ else if(type==="OUTSIDE RB PASS"){setPos("rb",40,34);setPos("ball",38,38);setTimeout(()=>{st.carrier="rb";setPos("ball",41,38);beginLive(type,side,4)},260)}
+ else if(type==="SHORT BALL"){setPos("wr1",44,43);setPos("ball",41,45);setTimeout(()=>{st.carrier="wr1";setPos("ball",45,46);beginLive(type,side,7)},280)}
+ else{setPos("wr2",68,79);setPos("ball",62,80);setTimeout(()=>{if(Math.random()<.58){finishPlay(0,true,false);return}st.carrier="wr2";setPos("ball",69,81);beginLive(type,side,24)},330)}
+}
+function beginLive(type,side,baseGain){
+ st.live=true;st.busy=false;st.runTicks=0;st.baseGain=baseGain;el(st.carrier).classList.add("active");msg.textContent="RUN! USE D-PAD";
+ setTimeout(cpuDefenseTick,150);
+}
+function cpuDefenseTick(){
+ if(!st.live)return;
+ st.runTicks++;
+ let [cx,cy]=pos[st.carrier], nearest=null,best=999;
+ for(const id of ["d1","d2","d3","d4","d5"]){let [x,y]=pos[id];let dist=Math.hypot(cx-x,(cy-y)*.6);if(dist<best){best=dist;nearest=id}}
+ if(nearest){let [x,y]=pos[nearest];x+=Math.sign(cx-x)*1.8;y+=Math.sign(cy-y)*1.6;setPos(nearest,x,y);}
+ if(best<3.2||st.runTicks>35){let gain=Math.max(-2,Math.round((pos[st.carrier][0]-defaults[st.carrier][0])*.7+st.baseGain));finishPlay(gain,false,false);return}
+ setTimeout(cpuDefenseTick,120);
+}
+function move(dir){
+ if(!st.live||!st.carrier)return;
+ let [x,y]=pos[st.carrier],step=2.2;
+ if(dir==="up")y-=step;if(dir==="down")y+=step;if(dir==="left")x-=step;if(dir==="right")x+=step;
+ x=Math.max(7,Math.min(92,x));y=Math.max(30,Math.min(91,y));setPos(st.carrier,x,y);setPos("ball",x+1,y+3);
+ if(x>=91){let gain=Math.max(0,100-st.spot);finishPlay(gain,false,true)}
+}
+function boost(){
+ if(!st.live||!st.carrier)return;
+ let [x,y]=pos[st.carrier];setPos(st.carrier,Math.min(92,x+4),y);setPos("ball",Math.min(93,x+5),y+3);
+}
+document.querySelectorAll("[data-dir]").forEach(b=>{
+ let timer;
+ const go=()=>{move(b.dataset.dir);timer=setInterval(()=>move(b.dataset.dir),120)};
+ const stop=()=>clearInterval(timer);
+ b.addEventListener("pointerdown",e=>{e.preventDefault();go()});
+ ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,stop));
+});
+el("boost").addEventListener("pointerdown",e=>{e.preventDefault();boost()});
+
+function finishPlay(gain,incomplete=false,td=false){
+ if(!st.started)return;
+ st.live=false;st.busy=true;if(st.carrier)el(st.carrier).classList.remove("active");
+ st.time=Math.max(0,st.time-(incomplete?7:24+Math.floor(Math.random()*10)));
+ if(incomplete){st.down++;msg.textContent="INCOMPLETE";}
+ else{
+   if(td||st.spot+gain>=100){st.home+=7;msg.textContent="TOUCHDOWN "+home.value+"!";setTimeout(()=>{switchPoss(true);afterPlay()},700);return}
+   st.spot+=gain;msg.textContent=gain+" YARD GAIN";
+   if(gain>=st.toGo){st.down=1;st.toGo=10}else{st.toGo=Math.max(1,st.toGo-gain);st.down++;}
+ }
+ if(st.down>4){msg.textContent="TURNOVER ON DOWNS";switchPoss(false)}
+ setTimeout(afterPlay,500);
+}
+function switchPoss(score){
+ st.poss=st.poss==="home"?"away":"home";st.down=1;st.toGo=10;if(score)st.spot=st.poss==="home"?25:75;
+}
+function afterPlay(){
+ st.busy=false;st.carrier=null;resetSprites();
+ if(st.time<=0){st.q++;if(st.q>4){st.started=false;msg.textContent="FINAL";update();return}st.time=300}
+ update();
+ if(st.poss==="away"&&st.started)setTimeout(cpuDrive,500);
+}
+function cpuDrive(){
+ if(st.poss!=="away"||!st.started)return;
+ st.busy=true;let gain=Math.floor(Math.random()*16)-2;let pass=Math.random()<.65;
+ st.time=Math.max(0,st.time-(pass?18:27));
+ if(Math.random()<.08)gain=25+Math.floor(Math.random()*30);
+ st.spot-=Math.max(-2,gain);
+ if(st.spot<=0){st.away+=7;msg.textContent="CPU TOUCHDOWN";setTimeout(()=>{switchPoss(true);afterPlay()},700);return}
+ if(gain>=st.toGo){st.down=1;st.toGo=10}else{st.toGo=Math.max(1,st.toGo-gain);st.down++;}
+ if(st.down>4){switchPoss(false);msg.textContent="YOUR BALL";setTimeout(afterPlay,450);return}
+ msg.textContent="CPU "+(pass?"PASS":"RUN")+" "+gain+" YDS";setTimeout(()=>{st.busy=false;update();setTimeout(cpuDrive,500)},500);
+}
+function update(){
+ ha.textContent=home.value;aa.textContent=away.value;hs.textContent=st.home;as.textContent=st.away;q.textContent="Q"+st.q;
+ let m=Math.floor(st.time/60),s=st.time%60;clk.textContent=m+":"+String(s).padStart(2,"0");
+ let ab=st.poss==="home"?home.value:away.value,yd=st.poss==="home"?st.spot:100-st.spot;
+ hud.textContent=(st.down===1?"1ST":st.down===2?"2ND":st.down===3?"3RD":"4TH")+" & "+st.toGo+" • "+ab+" "+yd;
+ los.style.left=(4+st.spot*.92)+"%";let f=st.poss==="home"?Math.min(100,st.spot+st.toGo):Math.max(0,st.spot-st.toGo);first.style.left=(4+f*.92)+"%";
+}
+resetSprites();update();
+</script>
+</body>
+</html>
