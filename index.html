@@ -9,31 +9,45 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:#09051a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden;touch-action:none}
   body{display:grid;place-items:center}
-  #wrap{position:relative;width:min(100vw,900px);height:min(100vh,600px);background:#120b2b;overflow:hidden}
+  #wrap{
+    position:relative;
+    width:min(100vw,1080px);
+    aspect-ratio:1080 / 500;
+    background:#120b2b;
+    overflow:hidden;
+  }
   canvas{width:100%;height:100%;display:block;image-rendering:pixelated;background:linear-gradient(#ff4d8d 0%,#ff8a5c 38%,#3d246c 39%,#160d34 100%)}
-  #hud{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px}
-  #rage{position:absolute;top:42px;left:12px;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none}
-  #controls{position:absolute;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end}
-  .move{display:flex;gap:12px}
+  #hud{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px;font-size:18px}
+  #rage{position:absolute;top:42px;left:12px;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;font-size:16px}
+  #controls{position:absolute;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end}
+  .move{display:flex;gap:6px;align-items:end}
   button{border:0;color:white;font-weight:1000;letter-spacing:.04em;box-shadow:0 6px 0 rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
-  .ctl{width:74px;height:74px;border-radius:50%;font-size:30px}
-  #up{background:#1678ff}
-  #down{background:#ffd21a;color:#211800}
+  .ctl{width:86px;height:78px;border-radius:0;font-size:0;box-shadow:none;position:relative;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+  #up{background:#1678ff;clip-path:polygon(50% 0,100% 100%,0 100%)}
+  #down{background:#ffd21a;clip-path:polygon(0 0,100% 0,50% 100%)}
   #start{min-width:150px;height:62px;border-radius:18px;background:#d91f2f;font-size:18px;clip-path:polygon(0 8%,90% 0,100% 25%,92% 45%,100% 70%,88% 100%,0 92%,8% 70%,0 46%,9% 26%)}
   button:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
-  #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:30px}
-  #message>div{background:rgba(8,4,24,.82);padding:20px 24px;border:3px solid #fff;border-radius:16px;max-width:470px;text-shadow:2px 2px #000}
+  #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:24px}
+  #message>div{background:rgba(8,4,24,.82);padding:20px 24px;border:3px solid #fff;border-radius:16px;max-width:500px;text-shadow:2px 2px #000}
   #message h1{margin:0 0 8px;font-size:clamp(28px,6vw,52px)}
   #message p{margin:5px 0}
-  @media (max-width:600px){#wrap{width:100vw;height:100vh}.ctl{width:68px;height:68px}#start{min-width:130px}}
+  @media (max-width:700px){
+    #hud{font-size:15px}
+    #rage{font-size:13px;top:36px}
+    #controls{left:6px;right:6px;bottom:max(4px,env(safe-area-inset-bottom))}
+    .move{gap:4px}
+    .ctl{width:92px;height:84px}
+    #start{min-width:118px;height:58px;font-size:16px}
+    #message>div{max-width:420px;padding:16px 18px}
+  }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" width="900" height="600"></canvas>
+  <canvas id="game" width="1080" height="500"></canvas>
   <div id="hud"><span id="score">SCORE 0000</span><span id="lives">LIVES ♥♥</span></div>
   <div id="rage">RAGE x1.0</div>
-  <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>Move with ▲ / ▼ or the blue & yellow buttons.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
+  <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>Now tuned for a 1080×500 ultra-wide playfield.</p><p>Move with ▲ / ▼ or the blue & yellow triangle buttons.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
   <div id="controls">
     <div class="move">
       <button class="ctl" id="up" aria-label="Move up">▲</button>
@@ -52,20 +66,26 @@
   const msg = document.getElementById('message');
   const startBtn = document.getElementById('start');
 
-  const W=900,H=600;
+  const W=1080,H=500;
+  const HORIZON=340;
+  const GRID_TOP=350;
   let running=false, score=0, lives=2, last=0, enemyClock=0, shotClock=0, speed=330;
-  let enemyShotClock=0, elapsed=0, shake=0, combo=0, bossClock=0;
+  let elapsed=0, shake=0, combo=0, bossClock=0;
   let stars=[], bullets=[], enemies=[], enemyBullets=[], particles=[];
   const input={up:false,down:false};
-  const player={x:115,y:300,w:92,h:52,vy:0,inv:0};
+  const player={x:145,y:H/2,w:92,h:52,vy:0,inv:0};
 
-  for(let i=0;i<95;i++) stars.push({x:Math.random()*W,y:Math.random()*H,s:1+Math.random()*2,v:35+Math.random()*85});
+  function resetStars(){
+    stars=[];
+    for(let i=0;i<110;i++) stars.push({x:Math.random()*W,y:Math.random()*H,s:1+Math.random()*2,v:35+Math.random()*85});
+  }
+  resetStars();
 
   function rageLevel(){ return 1 + Math.min(3.5, elapsed/45 + score/2200); }
 
   function reset(){
-    score=0;lives=2;speed=330;enemyClock=0;shotClock=0;enemyShotClock=0;elapsed=0;shake=0;combo=0;bossClock=0;
-    bullets=[];enemies=[];enemyBullets=[];particles=[];player.y=300;player.vy=0;player.inv=0;
+    score=0;lives=2;speed=330;enemyClock=0;shotClock=0;elapsed=0;shake=0;combo=0;bossClock=0;
+    bullets=[];enemies=[];enemyBullets=[];particles=[];player.y=H/2;player.vy=0;player.inv=0;
     updateHUD();
   }
   function updateHUD(){
@@ -88,12 +108,12 @@
     const roll=Math.random();
     const type=forcedType || (roll<0.18?'tank':roll<0.40?'zig':'normal');
     const hp=type==='tank'?Math.min(6,3+Math.floor(rage)):1+(score>300?1:0)+(score>1000?1:0);
-    enemies.push({x:W+r,y:85+Math.random()*(H-180),r,v:speed+Math.random()*160+rage*25,hp,maxHp:hp,phase:Math.random()*6.28,type,fire:Math.random()*.5});
+    enemies.push({x:W+r,y:72+Math.random()*(H-150),r,v:speed+Math.random()*160+rage*25,hp,maxHp:hp,phase:Math.random()*6.28,type,fire:Math.random()*.5});
   }
 
   function spawnMiniBoss(){
     const hp=10+Math.floor(rageLevel()*4);
-    enemies.push({x:W+70,y:150+Math.random()*(H-300),r:58,v:175+rageLevel()*20,hp,maxHp:hp,phase:0,type:'boss',fire:0});
+    enemies.push({x:W+70,y:110+Math.random()*(H-220),r:58,v:175+rageLevel()*20,hp,maxHp:hp,phase:0,type:'boss',fire:0});
   }
 
   function shoot(){
@@ -144,7 +164,7 @@
     player.vy += dir*2050*dt;
     player.vy *= Math.pow(.0012,dt);
     player.y += player.vy*dt;
-    player.y=Math.max(70,Math.min(H-112,player.y));
+    player.y=Math.max(65,Math.min(H-96,player.y));
 
     shotClock+=dt;if(shotClock>.145){shotClock=0;shoot()}
 
@@ -207,17 +227,18 @@
     ctx.clearRect(-20,-20,W+40,H+40);
 
     // Miami sun
-    ctx.fillStyle='#ffdb5a';ctx.beginPath();ctx.arc(675,145,92,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffdb5a';ctx.beginPath();ctx.arc(825,120,78,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='rgba(190,39,100,.85)';
-    for(let y=118;y<213;y+=13)ctx.fillRect(583,y,184,6);
+    for(let y=92;y<170;y+=12)ctx.fillRect(745,y,160,6);
 
     // skyline
     ctx.fillStyle='#241346';
-    for(let x=0;x<W;x+=58){const h=45+((x*13)%105);ctx.fillRect(x,H-165-h,50,h)}
+    for(let x=0;x<W;x+=58){const h=38+((x*13)%88);ctx.fillRect(x,H-118-h,50,h)}
+
     // road/grid
     ctx.strokeStyle='rgba(83,238,255,.22)';ctx.lineWidth=2;
-    for(let y=430;y<H;y+=35){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
-    for(let x=-300;x<1200;x+=80){ctx.beginPath();ctx.moveTo(W/2,420);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=GRID_TOP;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    for(let x=-320;x<1400;x+=90){ctx.beginPath();ctx.moveTo(W/2,HORIZON);ctx.lineTo(x,H);ctx.stroke()}
 
     ctx.fillStyle='white';for(const s of stars)ctx.fillRect(s.x,s.y,s.s,s.s);
 
