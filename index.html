@@ -84,12 +84,41 @@
   const rageEl = document.getElementById('rage');
   const msg = document.getElementById('message');
   const startBtn = document.getElementById('start');
+  const bossMusic = new Audio('audio/hawk-boss-theme.wav');
+  bossMusic.loop = true;
+  bossMusic.preload = 'auto';
+  bossMusic.volume = 0.72;
+  let bossMusicUnlocked = false;
+
+  function unlockBossMusic(){
+    if(bossMusicUnlocked) return;
+    bossMusicUnlocked = true;
+    const oldVolume = bossMusic.volume;
+    bossMusic.volume = 0;
+    const p = bossMusic.play();
+    if(p && p.then){
+      p.then(()=>{ bossMusic.pause(); bossMusic.currentTime=0; bossMusic.volume=oldVolume; }).catch(()=>{ bossMusic.volume=oldVolume; });
+    } else {
+      bossMusic.pause(); bossMusic.currentTime=0; bossMusic.volume=oldVolume;
+    }
+  }
+  function playBossMusic(){
+    bossMusic.currentTime = 0;
+    bossMusic.volume = 0.72;
+    const p = bossMusic.play();
+    if(p && p.catch) p.catch(()=>{});
+  }
+  function stopBossMusic(){
+    bossMusic.pause();
+    try{ bossMusic.currentTime=0; }catch(_e){}
+  }
 
   let W=1080; const H=500;
   const HORIZON=340;
   const GRID_TOP=350;
   let running=false, score=0, lives=2, last=0, enemyClock=0, shotClock=0, speed=330;
   const MAX_LIVES=4;
+  const HEART_INVINCIBILITY=3.0;
   let elapsed=0, shake=0, combo=0, bossClock=0, hawkSpawned=false, hawkAlive=false, bossBanner=0;
   let bossBannerText='';
   let stars=[], bullets=[], enemies=[], enemyBullets=[], particles=[];
@@ -175,6 +204,7 @@
   }
 
   function reset(){
+    stopBossMusic();
     score=0;lives=2;speed=330;enemyClock=0;shotClock=0;elapsed=0;shake=0;combo=0;bossClock=0;hawkSpawned=false;hawkAlive=false;bossBanner=0;bossBannerText='';
     bullets=[];enemies=[];enemyBullets=[];particles=[];player.y=H/2;player.vy=0;player.inv=0;
     updateHUD();
@@ -185,9 +215,11 @@
     rageEl.textContent='RAGE x'+rageLevel().toFixed(1)+'  COMBO '+combo;
   }
   function start(){
+    unlockBossMusic();
     reset(); running=true; msg.style.display='none'; startBtn.textContent='↻ RESTART';
   }
   function end(){
+    stopBossMusic();
     running=false; input.up=false; input.down=false; player.vy=0;
     msg.innerHTML=`<div><h1>GAME OVER</h1><p>Score: ${score}</p><p>Peak Rage: x${rageLevel().toFixed(1)}</p><p>Press RESTART to suffer again.</p></div>`;
     msg.style.display='grid';
@@ -210,6 +242,7 @@
 
   function spawnHawkBoss(){
     hawkSpawned=true; hawkAlive=true;
+    playBossMusic();
     showBossBanner('⚡ WARNING — 1111 HAWK BOSS ⚡', 2.8);
     // Clear the lane so the 1111-point boss gets a clean entrance.
     enemies=[]; enemyBullets=[];
@@ -349,9 +382,16 @@
             if(e.type==='hawkBoss'){
               combo++;
               score+=500;
+              const gotHeart=lives<MAX_LIVES;
               lives=Math.min(MAX_LIVES,lives+1);
+              if(gotHeart){
+                player.inv=Math.max(player.inv,HEART_INVINCIBILITY);
+                showBossBanner('+1 LIFE ♥ — 3 SEC INVINCIBLE!', 3.2);
+              } else {
+                showBossBanner('HAWK DEFEATED — MAX LIVES!', 3.2);
+              }
+              stopBossMusic();
               hawkAlive=false;
-              showBossBanner('+1 LIFE — HAWK DEFEATED!', 3.2);
               enemyBullets=[];
               boom(e.x,e.y,72);
               shake=.7;
