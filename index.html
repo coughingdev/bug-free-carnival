@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#120b2b">
+<title>Dino Rail Blaster: RAGE MODE</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;background:#09051a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  :root{
+    --app-w:100vw;
+    --app-h:100dvh;
+    --hud-size:18px;
+    --rage-size:16px;
+    --control-size:92px;
+    --control-font:48px;
+    --control-gap:14px;
+    --control-edge:14px;
+    --bottom-pad:10px;
+    --circle-border:4px;
+    --start-w:150px;
+    --start-h:62px;
+    --start-font:18px;
+    --message-max:500px;
+    --message-pad-y:20px;
+    --message-pad-x:24px;
+    --rotate-size:52px;
+  }
+  body{position:fixed;inset:0;width:100%;height:100%;min-height:100%;background:#09051a}
+  #wrap{
+    position:fixed;
+    left:0;top:0;
+    width:var(--app-w);
+    height:var(--app-h);
+    background:#120b2b;
+    overflow:hidden;
+    contain:layout paint size;
+    transform:translateZ(0);
+  }
+  canvas{width:100%;height:100%;display:block;image-rendering:pixelated;background:linear-gradient(#ff4d8d 0%,#ff8a5c 38%,#3d246c 39%,#160d34 100%)}
+  #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px;font-size:var(--hud-size);z-index:6}
+  #rage{position:absolute;top:max(40px,calc(env(safe-area-inset-top) + 38px));left:max(14px,env(safe-area-inset-left));font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;font-size:var(--rage-size);z-index:6}
+  #controls{position:absolute;left:max(var(--control-edge),calc(env(safe-area-inset-left) + 6px));right:max(var(--control-edge),calc(env(safe-area-inset-right) + 6px));bottom:max(var(--bottom-pad),calc(env(safe-area-inset-bottom) + 4px));display:flex;justify-content:space-between;align-items:end;z-index:7;pointer-events:none}
+  .move{display:flex;flex-direction:column;gap:var(--control-gap);align-items:center;justify-content:flex-end;pointer-events:auto}
+  button{border:0;color:white;font-weight:1000;letter-spacing:.04em;box-shadow:0 6px 0 rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .ctl{width:var(--control-size);height:var(--control-size);border-radius:50%;font-size:var(--control-font);line-height:1;background:rgba(255,255,255,.07);color:#fff;border:var(--circle-border) solid rgba(255,255,255,.72);box-shadow:0 4px 0 rgba(0,0,0,.28),inset 0 0 0 2px rgba(0,0,0,.16);position:relative;display:grid;place-items:center;text-shadow:0 2px 2px rgba(0,0,0,.65);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:0}
+  #up{background:rgba(22,120,255,.13)}
+  #down{background:rgba(255,210,26,.10)}
+  #start{pointer-events:auto;min-width:var(--start-w);height:var(--start-h);padding:0 16px;border-radius:18px;background:#d91f2f;font-size:var(--start-font);clip-path:polygon(0 8%,90% 0,100% 25%,92% 45%,100% 70%,88% 100%,0 92%,8% 70%,0 46%,9% 26%)}
+  button:active{transform:scale(.95);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .ctl:active{background:rgba(255,255,255,.18);border-color:#fff}
+  #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:24px;z-index:4}
+  #message>div{background:rgba(8,4,24,.82);padding:var(--message-pad-y) var(--message-pad-x);border:3px solid #fff;border-radius:16px;max-width:var(--message-max);text-shadow:2px 2px #000}
+  #message h1{margin:0 0 8px;font-size:clamp(24px,6vw,52px)}
+  #message p{margin:5px 0;font-size:clamp(12px,2.2vw,17px)}
+  #rotate{display:none;position:absolute;inset:0;z-index:20;background:#09051a;place-items:center;text-align:center;padding:28px;font-weight:1000;text-shadow:2px 2px #000}
+  #rotate strong{display:block;font-size:clamp(24px,9vw,var(--rotate-size));margin-bottom:8px}
+  #rotate span{font-size:clamp(13px,3vw,18px)}
+  @media (orientation:portrait){#rotate{display:grid}#controls{visibility:hidden}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="rotate"><div><strong>↻ ROTATE PHONE</strong><span>Dino Rail Blaster is built for landscape play.</span></div></div>
+  <canvas id="game" width="1080" height="500"></canvas>
+  <div id="hud"><span id="score">SCORE 0000</span><span id="lives">LIVES ♥♥</span></div>
+  <div id="rage">RAGE x1.0</div>
+  <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>Adaptive build for modern phones.</p><p>Big transparent circular controls shrink automatically on smaller screens.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
+  <div id="controls">
+    <div class="move">
+      <button class="ctl" id="up" aria-label="Move up">↑</button>
+      <button class="ctl" id="down" aria-label="Move down">↓</button>
+    </div>
+    <button id="start">☄ START RAGE</button>
+  </div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const rageEl = document.getElementById('rage');
+  const msg = document.getElementById('message');
+  const startBtn = document.getElementById('start');
+
+  let W=1080; const H=500;
+  const HORIZON=340;
+  const GRID_TOP=350;
+  let running=false, score=0, lives=2, last=0, enemyClock=0, shotClock=0, speed=330;
+  const MAX_LIVES=4;
+  let elapsed=0, shake=0, combo=0, bossClock=0, hawkSpawned=false, hawkAlive=false, bossBanner=0;
+  let bossBannerText='';
+  let stars=[], bullets=[], enemies=[], enemyBullets=[], particles=[];
+  const input={up:false,down:false};
+  const player={x:150,y:H/2,w:92,h:52,vy:0,inv:0};
+
+  const root=document.documentElement;
+  let viewportRAF=0;
+  function clamp(min,val,max){ return Math.max(min,Math.min(max,val)); }
+  function viewportSize(){
+    const vv=window.visualViewport;
+    return {
+      width: Math.max(1, vv ? vv.width : window.innerWidth),
+      height: Math.max(1, vv ? vv.height : window.innerHeight)
+    };
+  }
+  function applyResponsiveUI(v){
+    const short=v.height;
+    const narrow=v.width;
+    const compact=Math.min(short,narrow);
+    root.style.setProperty('--hud-size', clamp(12, compact*0.032, 18).toFixed(1)+'px');
+    root.style.setProperty('--rage-size', clamp(11, compact*0.027, 16).toFixed(1)+'px');
+    root.style.setProperty('--control-size', clamp(62, compact*0.17, 92).toFixed(1)+'px');
+    root.style.setProperty('--control-font', clamp(30, compact*0.088, 48).toFixed(1)+'px');
+    root.style.setProperty('--control-gap', clamp(8, compact*0.025, 14).toFixed(1)+'px');
+    root.style.setProperty('--control-edge', clamp(8, compact*0.028, 14).toFixed(1)+'px');
+    root.style.setProperty('--bottom-pad', clamp(5, compact*0.018, 10).toFixed(1)+'px');
+    root.style.setProperty('--circle-border', clamp(3, compact*0.007, 4).toFixed(1)+'px');
+    root.style.setProperty('--start-w', clamp(96, narrow*0.13, 150).toFixed(1)+'px');
+    root.style.setProperty('--start-h', clamp(42, short*0.11, 62).toFixed(1)+'px');
+    root.style.setProperty('--start-font', clamp(12, compact*0.038, 18).toFixed(1)+'px');
+    root.style.setProperty('--message-max', clamp(260, narrow*0.46, 500).toFixed(1)+'px');
+    root.style.setProperty('--message-pad-y', clamp(12, compact*0.035, 20).toFixed(1)+'px');
+    root.style.setProperty('--message-pad-x', clamp(14, compact*0.044, 24).toFixed(1)+'px');
+    root.style.setProperty('--rotate-size', clamp(26, compact*0.1, 52).toFixed(1)+'px');
+  }
+  function fitToPhoneViewport(){
+    const v=viewportSize();
+    root.style.setProperty('--app-w',v.width+'px');
+    root.style.setProperty('--app-h',v.height+'px');
+    applyResponsiveUI(v);
+
+    const landscapeAspect=Math.max(v.width,v.height)/Math.min(v.width,v.height);
+    const nextW=Math.round(H*landscapeAspect);
+    if(v.width>=v.height && Math.abs(nextW-W)>0){
+      W=nextW;
+      canvas.width=W;
+      canvas.height=H;
+      resetStars();
+    } else if(v.width<v.height){
+      W=1080;
+      canvas.width=W;
+      canvas.height=H;
+    }
+    window.scrollTo(0,0);
+  }
+  function scheduleViewportFit(){
+    cancelAnimationFrame(viewportRAF);
+    viewportRAF=requestAnimationFrame(fitToPhoneViewport);
+  }
+
+  function resetStars(){
+    stars=[];
+    for(let i=0;i<110;i++) stars.push({x:Math.random()*W,y:Math.random()*H,s:1+Math.random()*2,v:35+Math.random()*85});
+  }
+  resetStars();
+
+  function rageLevel(){ return 1 + Math.min(3.5, elapsed/45 + score/2200); }
+  function showBossBanner(text, time=2.4){ bossBannerText=text; bossBanner=time; }
+  function hawkPhase(e){
+    const ratio=e.hp/e.maxHp;
+    if(ratio<=0.32) return 3;
+    if(ratio<=0.65) return 2;
+    return 1;
+  }
+  function checkHawkBossTrigger(){
+    // Trigger at 1111 OR ABOVE, including score jumps that skip over 1111.
+    if(running && !hawkSpawned && score>=1111){
+      spawnHawkBoss();
+      return true;
+    }
+    return false;
+  }
+
+  function reset(){
+    score=0;lives=2;speed=330;enemyClock=0;shotClock=0;elapsed=0;shake=0;combo=0;bossClock=0;hawkSpawned=false;hawkAlive=false;bossBanner=0;bossBannerText='';
+    bullets=[];enemies=[];enemyBullets=[];particles=[];player.y=H/2;player.vy=0;player.inv=0;
+    updateHUD();
+  }
+  function updateHUD(){
+    scoreEl.textContent='SCORE '+String(score).padStart(4,'0');
+    livesEl.textContent='LIVES '+('♥'.repeat(Math.max(0,lives)))+('♡'.repeat(Math.max(0,MAX_LIVES-lives)));
+    rageEl.textContent='RAGE x'+rageLevel().toFixed(1)+'  COMBO '+combo;
+  }
+  function start(){
+    reset(); running=true; msg.style.display='none'; startBtn.textContent='↻ RESTART';
+  }
+  function end(){
+    running=false; input.up=false; input.down=false; player.vy=0;
+    msg.innerHTML=`<div><h1>GAME OVER</h1><p>Score: ${score}</p><p>Peak Rage: x${rageLevel().toFixed(1)}</p><p>Press RESTART to suffer again.</p></div>`;
+    msg.style.display='grid';
+    requestAnimationFrame(()=>{ window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0; scheduleViewportFit(); });
+  }
+
+  function spawnEnemy(forcedType){
+    const r=20+Math.random()*19;
+    const rage=rageLevel();
+    const roll=Math.random();
+    const type=forcedType || (roll<0.18?'tank':roll<0.40?'zig':'normal');
+    const hp=type==='tank'?Math.min(6,3+Math.floor(rage)):1+(score>300?1:0)+(score>1000?1:0);
+    enemies.push({x:W+r,y:72+Math.random()*(H-150),r,v:speed+Math.random()*160+rage*25,hp,maxHp:hp,phase:Math.random()*6.28,type,fire:Math.random()*.5});
+  }
+
+  function spawnMiniBoss(){
+    const hp=10+Math.floor(rageLevel()*4);
+    enemies.push({x:W+70,y:110+Math.random()*(H-220),r:58,v:175+rageLevel()*20,hp,maxHp:hp,phase:0,type:'boss',fire:0});
+  }
+
+  function spawnHawkBoss(){
+    hawkSpawned=true; hawkAlive=true;
+    showBossBanner('⚡ WARNING — 1111 HAWK BOSS ⚡', 2.8);
+    // Clear the lane so the 1111-point boss gets a clean entrance.
+    enemies=[]; enemyBullets=[];
+    const hp=56;
+    enemies.push({x:W+145,y:H*.48,r:96,v:125,hp,maxHp:hp,phase:0,type:'hawkBoss',fire:.7,entered:false,flash:0,lastPhase:1,smoke:0});
+    shake=.45;
+  }
+
+  function shoot(){
+    bullets.push({x:player.x+82,y:player.y-10,v:700},{x:player.x+82,y:player.y+14,v:700});
+  }
+  function enemyShoot(e){
+    const rage=rageLevel();
+    const dx=(player.x+35)-e.x,dy=player.y-e.y,len=Math.hypot(dx,dy)||1;
+    const base=280+rage*55;
+    if(e.type==='hawkBoss'){
+      const aim=Math.atan2(dy,dx);
+      const phase=hawkPhase(e);
+      const spreads = phase===1 ? [-0.34,-0.17,0,0.17,0.34] : phase===2 ? [-0.52,-0.34,-0.17,0,0.17,0.34,0.52] : [-0.68,-0.5,-0.34,-0.17,0,0.17,0.34,0.5,0.68];
+      const speedBoost = phase===1 ? 55 : phase===2 ? 80 : 105;
+      for(const a of spreads){
+        const ang=aim+a;
+        enemyBullets.push({x:e.x-e.r*.62,y:e.y,vx:Math.cos(ang)*(base+speedBoost),vy:Math.sin(ang)*(base+speedBoost),r:phase===3?9:8,electric:true});
+      }
+      const sniperAngles = phase===1 ? [-0.05,0.05] : phase===2 ? [-0.1,0.1] : [-0.15,0,0.15];
+      for(const a of sniperAngles){
+        const ang=aim+a;
+        enemyBullets.push({x:e.x-e.r*.62,y:e.y,vx:Math.cos(ang)*(base+150+phase*18),vy:Math.sin(ang)*(base+150+phase*18),r:6,electric:true});
+      }
+    } else if(e.type==='boss'){
+      for(const a of [-0.34,-0.17,0,0.17,0.34]){
+        const ang=Math.atan2(dy,dx)+a;
+        enemyBullets.push({x:e.x-e.r*.55,y:e.y,vx:Math.cos(ang)*base,vy:Math.sin(ang)*base,r:8});
+      }
+    } else if(e.type==='tank'){
+      for(const a of [-0.12,0.12]){
+        const ang=Math.atan2(dy,dx)+a;
+        enemyBullets.push({x:e.x-e.r*.5,y:e.y,vx:Math.cos(ang)*base,vy:Math.sin(ang)*base,r:7});
+      }
+    } else {
+      enemyBullets.push({x:e.x-e.r*.5,y:e.y,vx:dx/len*base,vy:dy/len*base,r:6});
+    }
+  }
+  function boom(x,y,n=12){
+    for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-.5)*290,vy:(Math.random()-.5)*290,t:.45+Math.random()*.35});
+  }
+  function hitEnemy(a,b){
+    const dx=a.x-b.x,dy=a.y-b.y;
+    return dx*dx+dy*dy < (b.r+29)*(b.r+29);
+  }
+  function hitPlayerBullet(b){
+    const px=player.x+36,py=player.y;
+    return Math.abs(b.x-px)<27 && Math.abs(b.y-py)<22;
+  }
+  function damagePlayer(){
+    if(player.inv>0)return;
+    lives--;combo=0;player.inv=1.15;shake=.3;boom(player.x+40,player.y,24);updateHUD();
+    if(lives<=0)end();
+  }
+
+  function update(dt){
+    for(const s of stars){s.x-=s.v*dt*(running?1.5:1);if(s.x<0){s.x=W;s.y=Math.random()*H}}
+    if(!running) return;
+
+    elapsed+=dt; bossClock+=dt; if(bossBanner>0)bossBanner-=dt; if(player.inv>0)player.inv-=dt; if(shake>0)shake-=dt;
+
+    const dir=(input.down?1:0)-(input.up?1:0);
+    player.vy += dir*2050*dt;
+    player.vy *= Math.pow(.0012,dt);
+    player.y += player.vy*dt;
+    player.y=Math.max(65,Math.min(H-96,player.y));
+
+    shotClock+=dt;if(shotClock>.145){shotClock=0;shoot()}
+
+    checkHawkBossTrigger();
+
+    enemyClock+=dt;
+    const interval=Math.max(.16,.56-rageLevel()*.07);
+    if(!hawkAlive && enemyClock>interval){enemyClock=0;spawnEnemy()}
+    speed=330+Math.min(390,score*.22)+elapsed*1.7;
+
+    if(!hawkAlive && bossClock>24){bossClock=0;spawnMiniBoss();}
+
+    for(const b of bullets)b.x+=b.v*dt;
+    for(const e of enemies){
+      if(e.type==='hawkBoss'){
+        const phase=hawkPhase(e);
+        const targetX=W*.78;
+        if(e.x>targetX){e.x-=e.v*dt;} else {e.entered=true;e.x=targetX+Math.sin(performance.now()/(phase===3?360:phase===2?520:700))*(phase===3?28:phase===2?22:18);}
+        e.y=H*.47+Math.sin(performance.now()/(phase===3?300:phase===2?360:430))*(phase===3?124:phase===2?114:105);
+        e.fire-=dt;
+        e.flash=Math.max(0,(e.flash||0)-dt);
+        e.smoke=(e.smoke||0)+dt;
+        if(e.entered && e.fire<=0){
+          enemyShoot(e);
+          e.fire=phase===1?Math.max(.54,.92-rageLevel()*.05):phase===2?Math.max(.42,.74-rageLevel()*.06):Math.max(.3,.56-rageLevel()*.06);
+        }
+      } else {
+        e.x-=e.v*dt;
+        const wave=e.type==='zig'?75:e.type==='boss'?40:34;
+        const rate=e.type==='zig'?260:e.type==='boss'?520:390;
+        e.y+=Math.sin(performance.now()/rate+e.phase)*wave*dt;
+        e.fire-=dt;
+        const fireGap=e.type==='boss'?Math.max(.28,.72-rageLevel()*.08):e.type==='tank'?Math.max(.42,1.08-rageLevel()*.12):Math.max(.58,1.35-rageLevel()*.14);
+        if(e.fire<=0 && e.x<W-50){enemyShoot(e);e.fire=fireGap*(.75+Math.random()*.5);}
+      }
+    }
+    for(const b of enemyBullets){b.x+=b.vx*dt;b.y+=b.vy*dt}
+    for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}
+
+    bullets=bullets.filter(b=>b.x<W+30);
+    enemyBullets=enemyBullets.filter(b=>b.x>-30&&b.x<W+30&&b.y>-30&&b.y<H+30);
+    particles=particles.filter(p=>p.t>0);
+
+    for(let bi=enemyBullets.length-1;bi>=0;bi--){
+      if(hitPlayerBullet(enemyBullets[bi])){enemyBullets.splice(bi,1);damagePlayer();if(!running)return;}
+    }
+
+    for(let ei=enemies.length-1;ei>=0;ei--){
+      const e=enemies[ei];
+      let destroyed=false;
+      for(let bi=bullets.length-1;bi>=0;bi--){
+        const b=bullets[bi], dx=b.x-e.x, dy=b.y-e.y;
+        if(dx*dx+dy*dy<e.r*e.r){
+          bullets.splice(bi,1); e.hp--; boom(b.x,b.y,4);
+          if(e.type==='hawkBoss'){
+            e.flash=.11;
+            boom(e.x+(Math.random()-.5)*42,e.y+(Math.random()-.5)*36,3);
+            const phase=hawkPhase(e);
+            if(phase!==e.lastPhase){
+              e.lastPhase=phase;
+              showBossBanner(phase===2?'⚡ HAWK ENRAGED! ⚡':'⚡ FINAL PHASE! ⚡', 1.8);
+              shake=.35;
+            }
+          }
+          if(e.hp<=0){
+            if(e.type==='hawkBoss'){
+              combo++;
+              score+=500;
+              lives=Math.min(MAX_LIVES,lives+1);
+              hawkAlive=false;
+              showBossBanner('+1 LIFE — HAWK DEFEATED!', 3.2);
+              enemyBullets=[];
+              boom(e.x,e.y,72);
+              shake=.7;
+            } else {
+              const value=e.type==='boss'?250:e.type==='tank'?60:30;
+              combo++;score+=value+Math.min(100,combo*2);boom(e.x,e.y,e.type==='boss'?40:18);
+            }
+            enemies.splice(ei,1);destroyed=true;updateHUD();
+            // If this kill pushed the score from below 1111 to any value above it,
+            // the boss will be spawned immediately after this collision pass.
+          }
+          break;
+        }
+      }
+      if(destroyed) continue;
+      if(hitEnemy(player,e)){
+        if(e.type==='hawkBoss'){
+          damagePlayer(); e.x=Math.max(e.x,player.x+210); if(!running)return;
+        } else {
+          enemies.splice(ei,1);damagePlayer();if(!running)return;
+        }
+      } else if(e.x<-70){
+        enemies.splice(ei,1);damagePlayer();if(!running)return;
+      }
+    }
+    // Redundant milestone check: guarantees 1111+ triggers even when score changed
+    // during this same update frame (for example 1098 -> 1130 on one kill).
+    checkHawkBossTrigger();
+    updateHUD();
+  }
+
+  function pixelRect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x/4)*4,Math.round(y/4)*4,w,h)}
+  function draw(){
+    ctx.save();
+    if(shake>0)ctx.translate((Math.random()-.5)*10,(Math.random()-.5)*10);
+    ctx.clearRect(-20,-20,W+40,H+40);
+
+    const sunX=W*.765;ctx.fillStyle='#ffdb5a';ctx.beginPath();ctx.arc(sunX,120,78,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(190,39,100,.85)';
+    for(let y=92;y<170;y+=12)ctx.fillRect(sunX-80,y,160,6);
+
+    ctx.fillStyle='#241346';
+    for(let x=0;x<W;x+=58){const h=38+((x*13)%88);ctx.fillRect(x,H-118-h,50,h)}
+
+    ctx.strokeStyle='rgba(83,238,255,.22)';ctx.lineWidth=2;
+    for(let y=GRID_TOP;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    for(let x=-320;x<W+320;x+=90){ctx.beginPath();ctx.moveTo(W/2,HORIZON);ctx.lineTo(x,H);ctx.stroke()}
+
+    ctx.fillStyle='white';for(const s of stars)ctx.fillRect(s.x,s.y,s.s,s.s);
+
+    if(player.inv<=0 || Math.floor(player.inv*12)%2===0){
+      pixelRect(player.x,player.y-24,60,44,'#343849');
+      pixelRect(player.x+47,player.y-39,38,28,'#4f566c');
+      pixelRect(player.x+70,player.y-32,24,12,'#68728e');
+      pixelRect(player.x+75,player.y-35,5,5,'#f7f36b');
+      pixelRect(player.x-20,player.y-10,28,13,'#282c39');
+      pixelRect(player.x+18,player.y+17,15,27,'#292d3a');
+      pixelRect(player.x+48,player.y+17,15,27,'#292d3a');
+      pixelRect(player.x+17,player.y-38,52,9,'#141622');
+      pixelRect(player.x+17,player.y+30,52,9,'#141622');
+      pixelRect(player.x+61,player.y-36,25,5,'#b4c0d7');
+      pixelRect(player.x+61,player.y+32,25,5,'#b4c0d7');
+    }
+
+    ctx.fillStyle='#9aff53';
+    for(const b of bullets){ctx.fillRect(b.x,b.y,22,5);ctx.fillRect(b.x+14,b.y-2,10,9)}
+
+    for(const e of enemies){
+      if(e.type==='hawkBoss'){
+        const x=e.x,y=e.y,r=e.r;
+        const ratio=e.hp/e.maxHp;
+        const phase=hawkPhase(e);
+        // Giant red-tailed hawk silhouette with jagged electric wings.
+        ctx.save();
+        ctx.translate(x,y);
+        const flap=Math.sin(performance.now()/125)*10;
+        // Wings: Trunks-inspired blue/lavender palette with lightning-bolt geometry.
+        ctx.fillStyle=phase===3?'#6b5cff':'#4f63d8';
+        ctx.beginPath();
+        ctx.moveTo(-18,-18);ctx.lineTo(-72,-78-flap);ctx.lineTo(-92,-48);ctx.lineTo(-132,-92-flap);ctx.lineTo(-120,-34);ctx.lineTo(-170,-58-flap);ctx.lineTo(-128,-4);ctx.lineTo(-176,8);ctx.lineTo(-100,30);ctx.lineTo(-48,20);ctx.closePath();ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(18,-18);ctx.lineTo(72,-78-flap);ctx.lineTo(92,-48);ctx.lineTo(132,-92-flap);ctx.lineTo(120,-34);ctx.lineTo(170,-58-flap);ctx.lineTo(128,-4);ctx.lineTo(176,8);ctx.lineTo(100,30);ctx.lineTo(48,20);ctx.closePath();ctx.fill();
+        ctx.fillStyle=phase>=2?'#c1a7ff':'#a78bfa';
+        ctx.beginPath();ctx.ellipse(0,0,48,68,0,0,Math.PI*2);ctx.fill();
+        // Dark hawk chest / head.
+        ctx.fillStyle='#29304f';ctx.beginPath();ctx.ellipse(8,-44,34,31,-.1,0,Math.PI*2);ctx.fill();
+        // Pale crown feathers.
+        ctx.fillStyle='#d9ccff';
+        ctx.beginPath();ctx.moveTo(-6,-70);ctx.lineTo(-24,-104);ctx.lineTo(0,-86);ctx.lineTo(12,-112);ctx.lineTo(22,-82);ctx.lineTo(42,-101);ctx.lineTo(30,-66);ctx.closePath();ctx.fill();
+        // Beak + eye.
+        ctx.fillStyle='#f6c945';ctx.beginPath();ctx.moveTo(-19,-48);ctx.lineTo(-49,-38);ctx.lineTo(-18,-28);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#f6f7ff';ctx.fillRect(-7,-56,12,9);ctx.fillStyle='#241237';ctx.fillRect(-4,-54,5,5);
+        // Red tail fan.
+        ctx.fillStyle=phase===3?'#ff5c5c':'#b94138';
+        ctx.beginPath();ctx.moveTo(-28,52);ctx.lineTo(-54,96);ctx.lineTo(-18,84);ctx.lineTo(0,108);ctx.lineTo(18,84);ctx.lineTo(54,96);ctx.lineTo(28,52);ctx.closePath();ctx.fill();
+        // Electric yellow accents.
+        ctx.strokeStyle='#ffe64f';ctx.lineWidth=phase===3?8:6;ctx.lineJoin='miter';
+        for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*42,-22);ctx.lineTo(side*72,-2);ctx.lineTo(side*58,18);ctx.lineTo(side*94,35);ctx.stroke();}
+        // Hit flash / phase energy
+        if(e.flash>0){ctx.globalAlpha=Math.min(0.85,e.flash*7);ctx.fillStyle='#ffffff';ctx.beginPath();ctx.ellipse(0,0,58,80,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+        // Visible damage: cracks, missing-feather notches, and smoke intensify as hp falls.
+        if(ratio<0.65){ctx.strokeStyle='rgba(31,15,55,.9)';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-8,-12);ctx.lineTo(8,8);ctx.lineTo(-2,30);ctx.stroke();ctx.fillStyle='rgba(24,14,45,.95)';ctx.beginPath();ctx.moveTo(112,-24);ctx.lineTo(138,-16);ctx.lineTo(116,2);ctx.closePath();ctx.fill();}
+        if(ratio<0.32){ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,-64);ctx.lineTo(-4,-44);ctx.lineTo(10,-58);ctx.stroke();ctx.fillStyle='rgba(255,120,120,.25)';ctx.beginPath();ctx.arc(0,82,22,0,Math.PI*2);ctx.fill();}
+        if(ratio<0.85){
+          const smokeN = ratio<0.32 ? 4 : ratio<0.65 ? 3 : 2;
+          ctx.fillStyle='rgba(40,40,56,.45)';
+          for(let i=0;i<smokeN;i++){ const ox=-12+i*14, oy=-24-(i%2)*10+Math.sin(performance.now()/240+i)*4; ctx.beginPath(); ctx.arc(ox,oy,7+i*2,0,Math.PI*2); ctx.fill(); }
+        }
+        ctx.restore();
+        // Boss health bar across upper center.
+        const bw=Math.min(W*.55,520), bx=(W-bw)/2, by=56;
+        ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(bx,by,bw,14);
+        ctx.fillStyle=phase===3?'#ff7373':phase===2?'#c9a6ff':'#a78bfa';ctx.fillRect(bx+2,by+2,(bw-4)*(e.hp/e.maxHp),10);
+        ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,14);
+        ctx.fillStyle='#fff';ctx.font='bold 15px system-ui';ctx.textAlign='center';ctx.fillText('1111 HAWK BOSS — PHASE '+phase,W/2,by-8);ctx.textAlign='start';
+      } else {
+        ctx.fillStyle=e.type==='boss'?'#85ff64':e.type==='tank'?'#28b33f':'#50d95a';
+        ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#113512';ctx.fillRect(e.x-e.r*.55,e.y-e.r*.22,8,8);ctx.fillRect(e.x+e.r*.25,e.y-e.r*.22,8,8);
+        ctx.fillStyle='#172313';ctx.fillRect(e.x-e.r*.36,e.y+e.r*.28,e.r*.72,6);
+        ctx.strokeStyle='#d3ff47';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(e.x,e.y-e.r);ctx.lineTo(e.x+8,e.y-e.r-18);ctx.stroke();
+        if(e.maxHp>2){
+          const w=e.r*1.6;ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(e.x-w/2,e.y-e.r-16,w,5);ctx.fillStyle='#fff';ctx.fillRect(e.x-w/2,e.y-e.r-16,w*(e.hp/e.maxHp),5);
+        }
+      }
+    }
+
+    for(const b of enemyBullets){
+      ctx.fillStyle=b.electric?'#ffe64f':'#ff3b3b';
+      ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();
+      ctx.fillRect(b.x-12,b.y-2,12,4);
+      if(b.electric){ctx.fillRect(b.x-5,b.y-11,4,8);ctx.fillRect(b.x+2,b.y+4,4,8);}
+    }
+
+    for(const p of particles){
+      ctx.globalAlpha=Math.max(0,p.t*2);ctx.fillStyle='#fff257';ctx.fillRect(p.x,p.y,5,5);ctx.globalAlpha=1;
+    }
+
+    if(bossBanner>0 && bossBannerText){
+      ctx.save();ctx.globalAlpha=Math.min(1,bossBanner*1.8);ctx.textAlign='center';ctx.font='1000 28px system-ui';
+      ctx.fillStyle='#fff';ctx.strokeStyle='#241237';ctx.lineWidth=7;
+      ctx.strokeText(bossBannerText,W/2,118);ctx.fillText(bossBannerText,W/2,118);ctx.restore();
+    }
+    if(running && rageLevel()>3.2){ctx.fillStyle='rgba(255,0,0,.06)';ctx.fillRect(0,0,W,H)}
+    ctx.restore();
+  }
+
+  function loop(t){
+    const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)
+  }
+
+  function bindHold(id,key){
+    const el=document.getElementById(id);
+    const on=e=>{e.preventDefault();input[key]=true};
+    const off=e=>{e.preventDefault();input[key]=false};
+    ['pointerdown','touchstart'].forEach(ev=>el.addEventListener(ev,on,{passive:false}));
+    ['pointerup','pointercancel','pointerleave','touchend','touchcancel'].forEach(ev=>el.addEventListener(ev,off,{passive:false}));
+  }
+  bindHold('up','up');bindHold('down','down');
+  addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='w')input.up=true;if(e.key==='ArrowDown'||e.key==='s')input.down=true;if(e.key==='Enter'&&!running)start()});
+  addEventListener('keyup',e=>{if(e.key==='ArrowUp'||e.key==='w')input.up=false;if(e.key==='ArrowDown'||e.key==='s')input.down=false});
+  startBtn.addEventListener('click',start);
+  addEventListener('resize',scheduleViewportFit,{passive:true});
+  addEventListener('orientationchange',()=>{scheduleViewportFit();setTimeout(scheduleViewportFit,120);setTimeout(scheduleViewportFit,350)},{passive:true});
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize',scheduleViewportFit,{passive:true});
+    visualViewport.addEventListener('scroll',scheduleViewportFit,{passive:true});
+  }
+  document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+  fitToPhoneViewport();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
