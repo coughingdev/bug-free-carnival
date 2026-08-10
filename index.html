@@ -24,13 +24,14 @@
   #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));display:flex;justify-content:space-between;font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;gap:12px;font-size:18px}
   #rage{position:absolute;top:max(40px,calc(env(safe-area-inset-top) + 38px));left:max(14px,env(safe-area-inset-left));font-weight:1000;text-shadow:2px 2px #000;pointer-events:none;font-size:16px}
   #controls{position:absolute;left:max(14px,calc(env(safe-area-inset-left) + 6px));right:max(14px,calc(env(safe-area-inset-right) + 6px));bottom:max(10px,calc(env(safe-area-inset-bottom) + 4px));display:flex;justify-content:space-between;align-items:end;z-index:5}
-  .move{display:flex;gap:6px;align-items:end}
+  .move{display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:flex-end}
   button{border:0;color:white;font-weight:1000;letter-spacing:.04em;box-shadow:0 6px 0 rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
-  .ctl{width:94px;height:84px;border-radius:0;font-size:0;box-shadow:none;position:relative;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
-  #up{background:#1678ff;clip-path:polygon(50% 0,100% 100%,0 100%)}
-  #down{background:#ffd21a;clip-path:polygon(0 0,100% 0,50% 100%)}
+  .ctl{width:92px;height:92px;border-radius:50%;font-size:48px;line-height:1;background:rgba(255,255,255,.07);color:#fff;border:4px solid rgba(255,255,255,.72);box-shadow:0 4px 0 rgba(0,0,0,.28),inset 0 0 0 2px rgba(0,0,0,.16);position:relative;display:grid;place-items:center;text-shadow:0 2px 2px rgba(0,0,0,.65);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:0}
+  #up{background:rgba(22,120,255,.13)}
+  #down{background:rgba(255,210,26,.10)}
   #start{min-width:150px;height:62px;border-radius:18px;background:#d91f2f;font-size:18px;clip-path:polygon(0 8%,90% 0,100% 25%,92% 45%,100% 70%,88% 100%,0 92%,8% 70%,0 46%,9% 26%)}
-  button:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+  button:active{transform:scale(.95);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .ctl:active{background:rgba(255,255,255,.18);border-color:#fff}
   #message{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:24px;z-index:4}
   #message>div{background:rgba(8,4,24,.82);padding:20px 24px;border:3px solid #fff;border-radius:16px;max-width:500px;text-shadow:2px 2px #000}
   #message h1{margin:0 0 8px;font-size:clamp(28px,6vw,52px)}
@@ -39,8 +40,8 @@
     #hud{font-size:15px}
     #rage{font-size:13px;top:36px}
     #controls{left:max(10px,calc(env(safe-area-inset-left) + 4px));right:max(10px,calc(env(safe-area-inset-right) + 4px));bottom:max(6px,calc(env(safe-area-inset-bottom) + 2px))}
-    .move{gap:4px}
-    .ctl{width:96px;height:86px}
+    .move{gap:12px}
+    .ctl{width:94px;height:94px;font-size:50px}
     #start{min-width:118px;height:58px;font-size:16px}
     #message>div{max-width:420px;padding:16px 18px}
   }
@@ -59,8 +60,8 @@
   <div id="message"><div><h1>DINO RAIL BLASTER</h1><p><b>RAGE MODE</b></p><p>iPhone 15–17 adaptive widescreen build.</p><p>Move with ▲ / ▼ or the blue & yellow triangle buttons.</p><p>Your shoulder cannons fire automatically.</p><p>Survive the escalating bullet hell.</p></div></div>
   <div id="controls">
     <div class="move">
-      <button class="ctl" id="up" aria-label="Move up">▲</button>
-      <button class="ctl" id="down" aria-label="Move down">▼</button>
+      <button class="ctl" id="up" aria-label="Move up">↑</button>
+      <button class="ctl" id="down" aria-label="Move down">↓</button>
     </div>
     <button id="start">☄ START RAGE</button>
   </div>
